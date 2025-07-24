@@ -2,3 +2,4 @@ Django
 selenium
 beautifulsoup4
 gunicorn
+djangorestframework
