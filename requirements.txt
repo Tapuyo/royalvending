@@ -1,1 +1,4 @@
-django
+Django
+selenium
+beautifulsoup4
+gunicorn
