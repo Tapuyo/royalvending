@@ -1459,18 +1459,18 @@ def home(request):
     # Create threads
         threads = [
             threading.Thread(target=remedydrinks, args=(remedy_list,)),
-            # threading.Thread(target=fitnessvending, args=(fitness_list,)),
-            # threading.Thread(target=aldi, args=(aldi_list,)),
-            # threading.Thread(target=kellysdistributors, args=(kellysdistributors_list,)),
-            # threading.Thread(target=harcher, args=(harcher_list,)),
-            # threading.Thread(target=campbells, args=(campbells_list,)),
-            # threading.Thread(target=iga, args=(iga_list,)),
-            # threading.Thread(target=oliver, args=(oliver_list,)),
-            # threading.Thread(target=mylollies, args=(mylollies_list,)),
-            # threading.Thread(target=costco, args=(costco_list,)),
-            # threading.Thread(target=nippys, args=(nippys_list,)),
-            # threading.Thread(target=thedistributorsbrisbane, args=(thedistributorsbrisbane_list,)),
-            # threading.Thread(target=atwork, args=(atwork_list,))
+            threading.Thread(target=fitnessvending, args=(fitness_list,)),
+            threading.Thread(target=aldi, args=(aldi_list,)),
+            threading.Thread(target=kellysdistributors, args=(kellysdistributors_list,)),
+            threading.Thread(target=harcher, args=(harcher_list,)),
+            threading.Thread(target=campbells, args=(campbells_list,)),
+            threading.Thread(target=iga, args=(iga_list,)),
+            threading.Thread(target=oliver, args=(oliver_list,)),
+            threading.Thread(target=mylollies, args=(mylollies_list,)),
+            threading.Thread(target=costco, args=(costco_list,)),
+            threading.Thread(target=nippys, args=(nippys_list,)),
+            threading.Thread(target=thedistributorsbrisbane, args=(thedistributorsbrisbane_list,)),
+            threading.Thread(target=atwork, args=(atwork_list,))
             
         ]
 
