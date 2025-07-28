@@ -75,17 +75,12 @@ def remedydrinks(remedy_list):
                 'supplier_url': 'https://www.remedydrinks.com/'
             }
         )
-            
+        time.sleep(0.1)
             
 
     # products = Product.objects.all()
     # return render(request, 'core/home.html', {'product_info_list': remedy_list})
     
-
-# # fintessvending.com
-# from django.shortcuts import render
-# from .models import Product
-# import requests
 
 def fetch_fintessvending_products(limit=30, offset=0):
     url = "https://www.fitnessvending.com/collections/all/products.json"
@@ -143,6 +138,7 @@ def fitnessvending(fitness_list):
                 'supplier_url': 'https://www.fitnessvending.com/'
             }
         )
+        time.sleep(0.1)
             
             
 
@@ -224,6 +220,7 @@ def aldi(product_list):
                 'supplier_url': 'https://www.aldi.com.au/'
             }
         )
+        time.sleep(0.1)
 
     # products = Product.objects.all()
     # return render(request, "core/home.html", {"product_info_list": product_list})
@@ -344,6 +341,7 @@ def kellysdistributors(products_data):
                                 'supplier_url': "https://kellysdistributors.com.au/"
                             }
                         )
+                        time.sleep(0.1)
 
                     except Exception as e:
                         print("Error parsing product:", e)
@@ -457,6 +455,7 @@ def harcher(products_data):
                                 'supplier_url': 'https://www.harcher.com.au/'
                             }
                         )
+                        time.sleep(0.1)
 
                     except Exception as e:
                         print("Error parsing product:", e)
@@ -634,6 +633,7 @@ def extract_product_info(html_pages, category_name):
                     'supplier_url': 'https://campbells.sorted.au/'
                 }
             )
+            time.sleep(0.1)
 
     return product_list
 
@@ -750,6 +750,8 @@ def iga(products):
                                 'supplier_url': 'https://www.iga.com.au'
                             }
                         )
+                        time.sleep(0.1)
+                        
                     except NoSuchElementException:
                         continue
     finally:
@@ -844,6 +846,7 @@ def oliver(products):
                         'supplier_url': base_url
                     }
                 )
+                time.sleep(0.1)
 
             except Exception as e:
                 print("Error extracting product:", e)
@@ -942,6 +945,7 @@ def mylollies(products):
                             'supplier_url': base_url
                         }
                     )
+                    time.sleep(0.1)
 
                 except Exception as e:
                     print("Error extracting product:", e)
@@ -1050,6 +1054,7 @@ def costco(products):
                             'supplier_url': base_url
                         }
                     )
+                    time.sleep(0.1)
 
                 except Exception as e:
                     print("Error extracting product:", e)
@@ -1125,6 +1130,7 @@ def nippys(products):
                         'supplier_url': base_url
                     }
                 )
+                time.sleep(0.1)
 
             except Exception as e:
                 print("Error parsing product:", e)
@@ -1226,6 +1232,7 @@ def extract_products(driver, category_name):
                     'supplier_url': 'https://atwork.woolworths.com.au/',
                 }
             )
+            time.sleep(0.1)
 
         except Exception as e:
             print(f"[ERROR] Product extraction failed: {e}")
@@ -1420,6 +1427,7 @@ def extract_product_info(pages_html, category_name):
                     'supplier_url': "https://www.thedistributorsbrisbane.com.au"
                 }
             )
+            time.sleep(0.1)
 
     return products
 
