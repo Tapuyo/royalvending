@@ -240,7 +240,7 @@ def aldi(product_list):
 
 def kellysdistributors(products_data):
     options = Options()
-    options.add_argument("--headless")  # Uncomment for headless scraping
+    # options.add_argument("--headless")  # Uncomment for headless scraping
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
@@ -366,7 +366,7 @@ def kellysdistributors(products_data):
 
 def harcher(products_data):
     options = Options()
-    options.add_argument("--headless")  # Uncomment for headless scraping
+    # options.add_argument("--headless")  # Uncomment for headless scraping
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
@@ -517,7 +517,7 @@ def slow_scroll(driver, times=10, delay=5):
 
 def get_authenticated_content(login_url, category_id, username, password, max_pages=382):
     options = Options()
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
 
@@ -666,7 +666,7 @@ def campbells(reqall_productsuest):
 
 def iga(products):
     options = Options()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)
@@ -774,7 +774,7 @@ def iga(products):
 
 def oliver(products):
     options = Options()
-    options.add_argument("--headless")  # Uncomment when not debugging
+    # options.add_argument("--headless")  # Uncomment when not debugging
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
@@ -875,7 +875,7 @@ def oliver(products):
 
 def mylollies(products):
     options = Options()
-    options.add_argument("--headless")  # Enable for production
+    # options.add_argument("--headless")  # Enable for production
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
@@ -975,7 +975,7 @@ def mylollies(products):
 
 def costco(products):
     options = Options()
-    options.add_argument("--headless")  
+    # options.add_argument("--headless")  
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
@@ -1079,7 +1079,7 @@ def nippys(products):
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
 
     base_url = "https://nippys.com.au/site/shop-online/"
@@ -1328,7 +1328,7 @@ CATEGORY_MAP_DISTRIBUTOR = {
 
 def get_authenticated_driver():
     options = Options()
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
 

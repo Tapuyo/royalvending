@@ -25,8 +25,8 @@
 #     return Response(serializer.data)
 
 
-from core.serializers import ProductSerializer
-from core.models import Product
+from core.serializers import CategorySerializer, ProductSerializer
+from core.models import Category, Product
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.db.models import Q
@@ -53,5 +53,21 @@ def getData(request):
         # Combine and preserve order
         products = list(exact_matches) + list(partial_matches)
 
+    for name in products:
+        normalized_name = name.category.strip().lower()
+        print(normalized_name)
+
+        # Only save if category doesn't exist yet
+        Category.objects.get_or_create(name=normalized_name)
+    
     serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def getCategories(request):
+
+    products = Category.objects.all()
+    
+    serializer = CategorySerializer(products, many=True)
     return Response(serializer.data)
