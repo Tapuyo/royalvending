@@ -665,6 +665,7 @@ def campbells(reqall_productsuest):
 # import time
 
 def iga(products):
+    products = []
     options = Options()
     # options.add_argument("--headless")
     options.add_argument("--no-sandbox")
@@ -705,29 +706,31 @@ def iga(products):
 
     try:
         driver.get(base_url)
-        time.sleep(5)  # wait for SPA to load
+        time.sleep(5)
 
         for cat_id, cat_name in CATEGORY_MAP_IGA.items():
-            print(f"\n=== Scraping Category: {cat_name} ===")
+            print(f"\nScraping Category: {cat_name}")
             for page in range(1, 30):
-                script = f'''
-                    window.location.hash = "#view=category&saleId=60288&categoryId={cat_id}&page={page}";
-                '''
-                driver.execute_script(script)
-                time.sleep(5)
+                driver.execute_script(
+                    f'window.location.hash = "#view=category&saleId=60288&categoryId={cat_id}&page={page}";'
+                )
+                time.sleep(3)
 
-                items = driver.find_elements(By.CSS_SELECTOR, ".catalogue-product-tile:not(.placeholder)")
+                items = driver.find_elements(By.CSS_SELECTOR, "#sf-items-table td.sf-item")
                 if not items:
-                    print(f"No items on page {page}. Stopping category {cat_name}.")
+                    print(f"No items on page {page}.")
                     break
 
                 for item in items:
                     try:
-                        name = item.find_element(By.CSS_SELECTOR, ".product-title").text
-                        price = item.find_element(By.CSS_SELECTOR, ".pricing .price-amount").text
-                        link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                        sku = item.get_attribute("data-sku") or link.split("/")[-1]
+                        heading = item.find_element(By.CSS_SELECTOR, "a.sf-item-heading")
+                        name = heading.text.strip()
+                        link = heading.get_attribute("href")
+                        price = item.find_element(
+                            By.CSS_SELECTOR, "span.sf-pricedisplay"
+                        ).text.strip()
                         img = item.find_element(By.CSS_SELECTOR, "img").get_attribute("src")
+                        sku = item.get_attribute("data-itemid") or link.split("/")[-1]
 
                         products.append({
                             "name": name,
@@ -751,14 +754,13 @@ def iga(products):
                             }
                         )
                         time.sleep(0.1)
-                        
                     except NoSuchElementException:
                         continue
+
     finally:
         driver.quit()
 
     # return render(request, 'core/home.html', {'product_info_list': products})
-
 
 #oliver
 # from django.shortcuts import render
@@ -874,6 +876,7 @@ def oliver(products):
 
 
 def mylollies(products):
+    # products = []
     options = Options()
     # options.add_argument("--headless")  # Enable for production
     options.add_argument("--no-sandbox")
@@ -941,7 +944,7 @@ def mylollies(products):
                             'image_url': image_url,
                             'product_link': link,
                             'category': 'snacks',
-                            'supplier': "Oliver’s",
+                            'supplier': "Mylollies",
                             'supplier_url': base_url
                         }
                     )
@@ -974,11 +977,13 @@ def mylollies(products):
 
 
 def costco(products):
+    # products = []
+
     options = Options()
-    # options.add_argument("--headless")  
+    # options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
+    options.add_argument("user-agent=Mozilla/5.0")
 
     driver = webdriver.Chrome(options=options)
 
@@ -1011,27 +1016,35 @@ def costco(products):
         for category in CATEGORY_MAP_COSTCO:
             category_url = base_url + category
             driver.get(category_url)
+
             try:
-                WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.product-tile"))
+                WebDriverWait(driver, 20).until(
+                    # EC.presence_of_element_located((By.CSS_SELECTOR, "div.product-item"))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.item-name a"))
                 )
             except Exception as e:
                 print(f"Timeout loading: {category_url} — {e}")
-                with open("costco_timeout_debug.html", "w", encoding="utf-8") as f:
-                    f.write(driver.page_source)
                 continue
-            product_items = driver.find_elements(By.CSS_SELECTOR, "div.product-tile")
 
+            product_items = driver.find_elements(By.CSS_SELECTOR, "div.product-item")
+            time.sleep(10)
+            # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # time.sleep(1)
             for item in product_items:
-                try:
-                    print(item)
-                    name = item.find_element(By.CSS_SELECTOR, ".product-title").text.strip()
-                    link = item.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                    image_url = item.find_element(By.CSS_SELECTOR, "img").get_attribute("src")
-                    price = item.find_element(By.CSS_SELECTOR, ".price").text.strip()
-                    sku = link.rstrip("/").split("/")[-1]
+                
+                    name_elem = item.find_elements(By.CSS_SELECTOR, "div.item-name a")
+                    price_elem = item.find_elements(By.CSS_SELECTOR, "span.product-price-amount span.notranslate")
 
-                    formatted_category = category.split("/")[1].replace("-", " ").title()
+                    if not name_elem or not price_elem:
+                        print("Skipping item due to missing name or price")
+                        continue  # Skip this product
+                    
+                    name = item.find_element(By.CSS_SELECTOR, "div.item-name a").text.strip()
+                    link = item.find_element(By.CSS_SELECTOR, "div.item-name a").get_attribute("href")
+                    price = item.find_element(By.CSS_SELECTOR, "span.product-price-amount span.notranslate").text.strip()
+                    image_url = item.find_element(By.CSS_SELECTOR, "div.thumb img").get_attribute("src")
+                    sku = link.rstrip("/").split("/")[-1]
+                    category_name = category.split("/")[-1].replace("-", " ").title()
 
                     products.append({
                         "name": name,
@@ -1039,9 +1052,9 @@ def costco(products):
                         "currentPrice": price,
                         "image_url": image_url,
                         "product_link": link,
-                        "category": formatted_category
+                        "category": category_name
                     })
-                    
+
                     Product.objects.update_or_create(
                         item_code=sku,
                         defaults={
@@ -1049,22 +1062,25 @@ def costco(products):
                             'current_price': price,
                             'image_url': image_url,
                             'product_link': link,
-                            'category': formatted_category,
+                            'category': category_name,
                             'supplier': "Costco",
                             'supplier_url': base_url
                         }
                     )
-                    time.sleep(0.1)
 
-                except Exception as e:
-                    print("Error extracting product:", e)
+                    time.sleep(0.1)
+                    try:
+                        next_button = driver.find_element(By.CSS_SELECTOR, ".owl-next")
+                        if "disabled" in next_button.get_attribute("class"):
+                            break
+                        ActionChains(driver).move_to_element(next_button).click().perform()
+                        time.sleep(1.2)  # Wait for new items to load
+                    except:
+                        break
 
     finally:
         driver.quit()
-
     # return render(request, 'core/home.html', {'product_info_list': products})
-
-
 
 # from django.shortcuts import render
 # from core.models import Product

@@ -33,33 +33,39 @@ from django.db.models import Q
 
 @api_view(['GET'])
 def getData(request):
-    # Accept a single 'search' parameter for both name and category
     search = request.GET.get('search', '').strip()
+    supplier = request.GET.get('supplier', '').strip()
 
-    if not search:
-        # Return all products if no search input is provided
-        products = Product.objects.all()
-    else:
-        # Most accurate matches first (exact name or category match)
+    # Start with all products
+    products = Product.objects.all()
+
+    # Apply search filter (name or category)
+    if search:
         exact_matches = Product.objects.filter(
             Q(name__iexact=search) | Q(category__iexact=search)
         )
 
-        # Partial matches excluding the exact matches
         partial_matches = Product.objects.filter(
             Q(name__icontains=search) | Q(category__icontains=search)
         ).exclude(id__in=exact_matches.values_list('id', flat=True))
 
-        # Combine and preserve order
         products = list(exact_matches) + list(partial_matches)
+    else:
+        products = Product.objects.all()
 
-    for name in products:
-        normalized_name = name.category.strip().lower()
-        print(normalized_name)
+    # Apply supplier filter
+    if supplier:
+        if isinstance(products, list):  # already a combined list from search
+            products = [p for p in products if supplier.lower() in p.supplier.lower()]
+        else:
+            products = products.filter(supplier__icontains=supplier)
 
-        # Only save if category doesn't exist yet
-        Category.objects.get_or_create(name=normalized_name)
-    
+    # Normalize and save categories (optional, as before)
+    for product in products:
+        if product.category:
+            normalized_name = product.category.strip().lower()
+            Category.objects.get_or_create(name=normalized_name)
+
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
 
