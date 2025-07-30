@@ -35,6 +35,8 @@ from django.db.models import Q
 def getData(request):
     search = request.GET.get('search', '').strip()
     supplier = request.GET.get('supplier', '').strip()
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 10))
 
     # Start with all products
     products = Product.objects.all()
@@ -51,23 +53,31 @@ def getData(request):
 
         products = list(exact_matches) + list(partial_matches)
     else:
-        products = Product.objects.all()
+        products = list(products)
 
     # Apply supplier filter
     if supplier:
-        if isinstance(products, list):  # already a combined list from search
-            products = [p for p in products if supplier.lower() in p.supplier.lower()]
-        else:
-            products = products.filter(supplier__icontains=supplier)
+        products = [p for p in products if supplier.lower() in p.supplier.lower()]
 
-    # Normalize and save categories (optional, as before)
+    # Normalize and save categories (optional)
     for product in products:
         if product.category:
             normalized_name = product.category.strip().lower()
             Category.objects.get_or_create(name=normalized_name)
 
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+    # Pagination
+    total = len(products)
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_products = products[start:end]
+
+    serializer = ProductSerializer(paginated_products, many=True)
+    return Response({
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "results": serializer.data
+    })
 
 
 @api_view(['GET'])
