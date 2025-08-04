@@ -101,4 +101,4 @@ def login(request):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def test_token(request):
-    return Response("passed for {}".format(request.user.username))
+    return Response("passed for {}".format(request.user.email))
