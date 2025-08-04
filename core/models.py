@@ -12,6 +12,7 @@ class Product(models.Model):
     item_code = models.CharField(max_length=50, blank=True)  
     supplier = models.CharField(max_length=50, blank=True) 
     supplier_url = models.CharField(max_length=50, blank=True)   
+    item_body = models.CharField(max_length=500, blank=True)   
 
     def __str__(self):
         return f"{self.name} ({self.item_code})"
@@ -22,3 +23,13 @@ class Category(models.Model):
     def __str__(self):
         return self.name
     
+# class User(models.Model):
+#     id = models.CharField(max_length=255)
+#     username = models.URLField(blank=True)
+#     password = models.URLField()
+#     email = models.CharField(max_length=50)
+
+#     def __str__(self):
+#         return f"{self.username} ({self.id})"
+    
+# #  ['id', 'username', 'password', 'email']

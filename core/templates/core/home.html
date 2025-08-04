@@ -92,6 +92,7 @@
                     <th>Image</th>
                     <th>Description price</th>
                     <th>Category</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,6 +104,7 @@
                     <td><img src="{{product_info.image_url}}" alt="{{product_info.image_url}} Image"></td>
                     <td><div>Carton price: {{product_info.carton_price}}<div> <div>Single price: {{product_info.single_price}}<div></td>
                     <td>{{product_info.category}}</td>
+                    <td>{{product_info.item_body}}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -15,6 +15,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import urllib.parse
 import threading
+import re
 
 def fetch_remedydrinks_products():
     url = "https://www.remedydrinks.com/collections/all/products.json"
@@ -39,10 +40,11 @@ def remedydrinks(remedy_list):
     
     for item in products_data:
         print('#####################')
-        print(item)
+      
         id = item.get("id", "")
         name = item.get("title", "Unnamed Product")
-        
+        body = item.get("body_html", "n/a"),
+        print(item)
         prices = item.get("variants", [{}])[0]
         price = prices.get("price", "")
         slug = item.get("urlSlugText", "")
@@ -59,7 +61,8 @@ def remedydrinks(remedy_list):
                 'carton_price': '0',
                 'single_price': '0',
                 'category': 'Drinks',
-                'code': id
+                'code': id,
+                'item_body': body
             })
 
 
@@ -72,17 +75,18 @@ def remedydrinks(remedy_list):
                 'product_link': product_url,
                 'category': 'Drinks',
                 'supplier': 'Remedy drinks',
-                'supplier_url': 'https://www.remedydrinks.com/'
+                'supplier_url': 'https://www.remedydrinks.com/',
+                'item_body': body
             }
         )
         time.sleep(0.1)
             
 
-    # products = Product.objects.all()
+    # remedy_list = Product.objects.all()
     # return render(request, 'core/home.html', {'product_info_list': remedy_list})
     
 
-def fetch_fintessvending_products(limit=30, offset=0):
+def fetch_fintessvending_products(limit=300, offset=0):
     url = "https://www.fitnessvending.com/collections/all/products.json"
   
     params = {
@@ -96,16 +100,17 @@ def fetch_fintessvending_products(limit=30, offset=0):
     response.raise_for_status()
     return response.json().get("products", [])
 
-
+# fitnessvending
 def fitnessvending(fitness_list):
-    # fitness_list = []
-    products_data = fetch_fintessvending_products(limit=30, offset=0)
+    fitness_list = []
+    products_data = fetch_fintessvending_products(limit=300, offset=0)
 
     for item in products_data:
         print('#####################')
         print(item)
         id = item.get("id", "")
         name = item.get("title", "Unnamed Product")
+        body = item.get("body_html", "n/a"),
         prices = item.get("variants", [{}])[0]
         price = prices.get("price", "")
         slug = item.get("urlSlugText", "")
@@ -122,7 +127,8 @@ def fitnessvending(fitness_list):
                 'carton_price': '0',
                 'single_price': '0',
                 'category': category,
-                'code': id
+                'code': id,
+                'item_body' : body
             })
 
 
@@ -135,7 +141,8 @@ def fitnessvending(fitness_list):
                 'product_link': product_url,
                 'category': category,
                 'supplier': 'Fitness Vending',
-                'supplier_url': 'https://www.fitnessvending.com/'
+                'supplier_url': 'https://www.fitnessvending.com/',
+                'item_body' : body
             }
         )
         time.sleep(0.1)
@@ -174,7 +181,7 @@ def fetch_aldi_products(limit=30, offset=0):
     response.raise_for_status()
     return response.json().get("data", [])
 
-
+# aldi
 def aldi(product_list):
     products_data = fetch_aldi_products(limit=30, offset=0)
     # product_list = []
@@ -183,6 +190,7 @@ def aldi(product_list):
         code = item.get("sku", "Unnamed Product")
         name = item.get("name", "Unnamed Product")
         print(item)
+        body = item.get("urlSlugText", "n/a"),
         price = item.get("price", {}).get("amountRelevantDisplay", "N/A")
         categories = item.get("categories", [])
         category = categories[0]["name"] if categories else "all"
@@ -196,6 +204,8 @@ def aldi(product_list):
             raw_url = assets[0].get("url", "")
             if "{width}" in raw_url:
                 image_url = raw_url.replace("{width}", "600").replace("{slug}", slug)
+                
+        bodyString = body[0]
         
         product_list.append({
                 'name': name,
@@ -205,7 +215,8 @@ def aldi(product_list):
                 'carton_price': '0',
                 'single_price': '0',
                 'category': category,
-                'code': code
+                'code': code,
+                'item_body': re.sub(r'[^A-Za-z0-9]', ' ', bodyString)
             })
         
         Product.objects.update_or_create(
@@ -217,7 +228,8 @@ def aldi(product_list):
                 'product_link': product_url,
                 'category': category,
                 'supplier': 'Aldi',
-                'supplier_url': 'https://www.aldi.com.au/'
+                'supplier_url': 'https://www.aldi.com.au/',
+                'item_body': re.sub(r'[^A-Za-z0-9]', ' ', bodyString)
             }
         )
         time.sleep(0.1)
@@ -237,8 +249,9 @@ def aldi(product_list):
 # from selenium.webdriver.common.by import By
 # from selenium.common.exceptions import NoSuchElementException
 # import time
-
+# kellysdistributors
 def kellysdistributors(products_data):
+    # products_data = []
     options = Options()
     # options.add_argument("--headless")  # Uncomment for headless scraping
     options.add_argument('--no-sandbox')
@@ -249,41 +262,41 @@ def kellysdistributors(products_data):
         "alkaline-water": "Alkaline Water",
         "carbonated-drinks": "Carbonated Drinks",
         "alchemy-2": "Alchemy",
-        # "arkadia-beverages-2": "Arkadia Beverages",
-        # "byron-bay-cookies-2": "Byron Bay Cookies",
-        # "edlyn-toppings-2": "Edlyn Toppings",
-        # "elixirs-latte-powder-4": "Elixirs Latte Powder",
-        # "little-bakes-2": "Little Bakes",
-        # "naked-syrups-2": "Naked Syrups",
-        # "origin-tea-2": "Origin Tea",
-        # "stevia-sugar-2": "Stevia Sugar",
-        # "coconut-water": "Coconut Water",
-        # "coffee-drinks": "Coffee Drinks",
-        # "confectionery": "Confectionery",
-        # "energy-drinks": "Energy Drinks",
-        # "tradie-energy": "Tradie Energy",
-        # "enhanced-water": "Enhanced Water",
-        # "flavoured-milks": "Flavoured Milks",
-        # "flavoured-water": "Flavoured Water",
-        # "grocery-products": "Grocery Products",
-        # "health-drinks": "Health Drinks",
-        # "iced-tea": "Iced Tea",
-        # "juices": "Juices",
-        # "coconut-water-smoothies-2": "Coconut Water Smoothies",
-        # "fruit-juices-4": "Fruit Juices",
-        # "prebiotic-smoothies-2": "Prebiotic Smoothies",
-        # "smoothies-2": "Smoothies",
-        # "veggie-juices-2": "Veggie Juices",
-        # "fruity-burst-2": "Fruity Burst",
-        # "lemonades": "Lemonades",
-        # "plant-based-milks": "Plant Based Milks",
-        # "snacks": "Snacks",
-        # "soda": "Soda",
-        # "sparkling-coconut-water": "Sparkling Coconut Water",
-        # "sports-drinks": "Sports Drinks",
-        # "the-raw-treats": "The Raw Treats",
-        # "takeaway-packaging": "Takeaway Packaging",
-        # "water": "Water"
+        "arkadia-beverages-2": "Arkadia Beverages",
+        "byron-bay-cookies-2": "Byron Bay Cookies",
+        "edlyn-toppings-2": "Edlyn Toppings",
+        "elixirs-latte-powder-4": "Elixirs Latte Powder",
+        "little-bakes-2": "Little Bakes",
+        "naked-syrups-2": "Naked Syrups",
+        "origin-tea-2": "Origin Tea",
+        "stevia-sugar-2": "Stevia Sugar",
+        "coconut-water": "Coconut Water",
+        "coffee-drinks": "Coffee Drinks",
+        "confectionery": "Confectionery",
+        "energy-drinks": "Energy Drinks",
+        "tradie-energy": "Tradie Energy",
+        "enhanced-water": "Enhanced Water",
+        "flavoured-milks": "Flavoured Milks",
+        "flavoured-water": "Flavoured Water",
+        "grocery-products": "Grocery Products",
+        "health-drinks": "Health Drinks",
+        "iced-tea": "Iced Tea",
+        "juices": "Juices",
+        "coconut-water-smoothies-2": "Coconut Water Smoothies",
+        "fruit-juices-4": "Fruit Juices",
+        "prebiotic-smoothies-2": "Prebiotic Smoothies",
+        "smoothies-2": "Smoothies",
+        "veggie-juices-2": "Veggie Juices",
+        "fruity-burst-2": "Fruity Burst",
+        "lemonades": "Lemonades",
+        "plant-based-milks": "Plant Based Milks",
+        "snacks": "Snacks",
+        "soda": "Soda",
+        "sparkling-coconut-water": "Sparkling Coconut Water",
+        "sports-drinks": "Sports Drinks",
+        "the-raw-treats": "The Raw Treats",
+        "takeaway-packaging": "Takeaway Packaging",
+        "water": "Water"
     }
 
     base_url = "https://kellysdistributors.com.au/product-category"
@@ -363,8 +376,9 @@ def kellysdistributors(products_data):
 # from selenium.common.exceptions import NoSuchElementException
 # import time
 # import urllib.parse
-
-def harcher(products_data):
+# harcher
+def home(request):
+    products_data = []
     options = Options()
     # options.add_argument("--headless")  # Uncomment for headless scraping
     options.add_argument('--no-sandbox')
@@ -464,7 +478,7 @@ def harcher(products_data):
     finally:
         driver.quit()
 
-    # return render(request, 'core/home.html', {'product_info_list': products_data})
+    return render(request, 'core/home.html', {'product_info_list': products_data})
 
 
 
@@ -1463,7 +1477,7 @@ def thedistributorsbrisbane(product_info_list):
     # return render(request, 'core/home.html', {'product_info_list': product_info_list})
 
 
-def home(request):
+def homet(request):
     all_products = []
     remedy_list = []
     fitness_list = []
