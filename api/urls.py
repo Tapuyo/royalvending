@@ -7,4 +7,8 @@ urlpatterns = [
     path('signup', views.signup),
     path('login', views.login),
     path('validatetoken', views.test_token),
+    path('addUserFav', views.addUserFav),
+    path('getUserFav', views.getUserFav),
+    path('deleteUserFav', views.deleteUserFav),
+    path('updateUserFav', views.updateUserFav),
 ]

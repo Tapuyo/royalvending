@@ -1,17 +1,70 @@
+POST https://vendfetch.onrender.com/api/signup 
+Content-Type: application/json
+
+{ "username": "john", "password": "password", "email": "john@mail.com" }
+
+###
+
+POST https://vendfetch.onrender.com/api/login 
+Content-Type: application/json
+
+{ "username": "john", "password": "password" }
+
+###
+
+GET https://vendfetch.onrender.com/api/validatetoken
+Content-Type: application/json 
+Authorization: Token ae8b9ab6964ef39030a51f099cd96246bd793649
+
+###
+//local
+
+
 POST http://127.0.0.1:8000/api/signup 
 Content-Type: application/json
 
-{ "username": "adam1", "password": "Pass1234!", "email": "adam@mail.com" }
+{ "username": "john", "password": "password", "email": "john@mail.com" }
 
 ###
 
 POST http://127.0.0.1:8000/api/login 
 Content-Type: application/json
 
-{ "username": "adam1", "password": "Pass1234!" }
+{ "username": "john", "password": "password" }
 
 ###
 
 GET http://127.0.0.1:8000/api/validatetoken
 Content-Type: application/json 
-Authorization: Token e4fd2dfd59ca5e312329276006def6ec46816abc
+Authorization: Token 8b105217fffdff379439b9cb03b0f4d4e5e6a396
+
+
+
+###
+
+POST http://127.0.0.1:8000/api/addUserFav 
+Content-Type: application/json
+
+{ "item_code": "2", "userid": "2", "name": "testName", "current_price": "22", "image_url": "http://example.com/image.jpg", "product_link": "http://example.com/product", "supplier": "testSupplier", "supplier_url": "http://example.com/supplier", "category": "testCategory", "item_body": "testBody", "item_quantity": 1 }
+
+
+###
+
+GET http://127.0.0.1:8000/api/getUserFav?&userid=2
+Content-Type: application/json 
+
+
+###
+
+DELETE  http://127.0.0.1:8000/api/deleteUserFav
+Content-Type: application/json 
+
+{ "id": 15}
+
+
+###
+
+POST http://127.0.0.1:8000/api/updateUserFav 
+Content-Type: application/json
+
+{ "id": 15, "item_quantity": 2 }

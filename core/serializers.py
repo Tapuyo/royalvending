@@ -1,6 +1,6 @@
 # core/serializers.py
 from rest_framework import serializers
-from .models import Category, Product
+from .models import Category, Product, Favorites
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +20,9 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = User 
         fields = ['id', 'username', 'password', 'email']
+        
+        
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorites
+        fields = '__all__'  
