@@ -12,10 +12,11 @@ from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import urllib.parse
 import threading
 import re
+
 
 def fetch_remedydrinks_products():
     url = "https://www.remedydrinks.com/collections/all/products.json"
@@ -377,8 +378,8 @@ def kellysdistributors(products_data):
 # import time
 # import urllib.parse
 # harcher
-def home(request):
-    products_data = []
+def harcher(products_data):
+    # products_data = []
     options = Options()
     # options.add_argument("--headless")  # Uncomment for headless scraping
     options.add_argument('--no-sandbox')
@@ -478,7 +479,7 @@ def home(request):
     finally:
         driver.quit()
 
-    return render(request, 'core/home.html', {'product_info_list': products_data})
+    # return render(request, 'core/home.html', {'product_info_list': products_data})
 
 
 
@@ -1477,7 +1478,136 @@ def thedistributorsbrisbane(product_info_list):
     # return render(request, 'core/home.html', {'product_info_list': product_info_list})
 
 
-def homet(request):
+# coffscordials
+def coffscordials(products_data):
+    # products_data = []
+
+    # Set up Chrome driver
+    options = Options()
+    # options.add_argument("--headless")  # Uncomment to run in headless mode
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(options=options)
+
+    # Category paths
+    CATEGORY_LIST = [
+        "specials",
+        "new-lines",
+        "category/food-services",
+        "category/confectionery",
+        "category/cold-beverages",
+        "category/snack-foods",
+        "category/coffee-tea",
+        "category/packaging",
+        "category/household-needs"
+    ]
+
+    base_url = "https://www.coffscordials.com.au"
+
+    try:
+        for category_path in CATEGORY_LIST:
+            category_name = category_path.split("/")[-1].replace("-", " ").title()
+            print(f"\n=== Scraping Category: {category_name} ===")
+
+            for page in range(1, 9):  # Loop pages 1–8
+                page_url = f"{base_url}/{category_path}?page={page}"
+                print(f"Fetching: {page_url}")
+
+                try:
+                    driver.get(page_url)
+
+                    # Wait for product cards to load
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".category-product.elevation-4"))
+                    )
+
+                    product_cards = driver.find_elements(By.CSS_SELECTOR, ".category-product.elevation-4")
+
+                    if not product_cards:
+                        print(f"No products on page {page}, skipping.")
+                        continue
+
+                    for card in product_cards:
+                        try:
+                            # Name + size
+                            name = card.find_element(By.CSS_SELECTOR, ".product-desc-name").text.strip()
+                            size = card.find_element(By.CSS_SELECTOR, ".product-desc-size").text.strip()
+                            full_name = f"{name} {size}"
+
+                            # Link & image
+                            link = card.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                            image_src = card.find_element(By.CSS_SELECTOR, ".product-image img").get_attribute("src")
+                            image_url = base_url + image_src if image_src.startswith("/") else image_src
+
+                            # Price handling (fallbacks)
+                            try:
+                                carton_price = (
+                                    card.find_element(By.CSS_SELECTOR, ".product-price-special").text.strip()
+                                    if card.find_elements(By.CSS_SELECTOR, ".product-price-special")
+                                    else card.find_element(By.CSS_SELECTOR, ".product-price-current").text.strip()
+                                )
+                            except NoSuchElementException:
+                                carton_price = "N/A"
+
+                            try:
+                                single_price = (
+                                    card.find_element(By.CSS_SELECTOR, ".product-price-specialcurrent").text.strip()
+                                    if card.find_elements(By.CSS_SELECTOR, ".product-price-specialcurrent")
+                                    else ""
+                                )
+                            except NoSuchElementException:
+                                single_price = ""
+
+                            # Extract SKU from URL
+                            sku = link.split("/")[-1].split("?")[0] if link else "N/A"
+
+                            # Add to results list
+                            products_data.append({
+                                "name": full_name,
+                                "code": sku,
+                                "currentPrice": carton_price,
+                                "single_price": single_price,
+                                "carton_price": carton_price,
+                                "image_url": image_url,
+                                "product_link": link,
+                                "category": category_name
+                            })
+
+                            # Save to DB
+                            Product.objects.update_or_create(
+                                item_code=sku,
+                                defaults={
+                                    'name': full_name,
+                                    'current_price': carton_price,
+                                    'image_url': image_url,
+                                    'product_link': link,
+                                    'category': category_name,
+                                    'supplier': "Coffs Cordials",
+                                    'supplier_url': base_url
+                                }
+                            )
+
+                            time.sleep(0.1)  # Light throttle
+
+                        except Exception as e:
+                            print(f"Error parsing product: {e}")
+                            continue
+
+                except TimeoutException:
+                    print(f"Timeout loading products for {category_name} on page {page}, skipping.")
+                    continue
+
+                except Exception as e:
+                    print(f"Unexpected error on page {page} of {category_name}: {e}")
+                    continue
+
+    finally:
+        driver.quit()
+
+    # return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+def home(request):
     all_products = []
     remedy_list = []
     fitness_list = []
@@ -1492,6 +1622,7 @@ def homet(request):
     nippys_list = []
     atwork_list = []
     thedistributorsbrisbane_list = []
+    coffscordials_list = []
     
     if 'product' in request.GET:
     # Create threads
@@ -1508,7 +1639,8 @@ def homet(request):
             threading.Thread(target=costco, args=(costco_list,)),
             threading.Thread(target=nippys, args=(nippys_list,)),
             threading.Thread(target=thedistributorsbrisbane, args=(thedistributorsbrisbane_list,)),
-            threading.Thread(target=atwork, args=(atwork_list,))
+            threading.Thread(target=atwork, args=(atwork_list,)),
+            threading.Thread(target=coffscordials, args=(coffscordials_list,))
             
         ]
 
@@ -1521,6 +1653,6 @@ def homet(request):
             thread.join()
 
         # Combine and render
-        all_products = remedy_list + fitness_list  + aldi_list + kellysdistributors_list + harcher_list + campbells_list + iga_list + oliver_list + mylollies_list + costco_list + nippys_list + thedistributorsbrisbane_list + atwork_list
+        all_products = remedy_list + fitness_list  + aldi_list + kellysdistributors_list + harcher_list + campbells_list + iga_list + oliver_list + mylollies_list + costco_list + nippys_list + thedistributorsbrisbane_list + atwork_list + coffscordials_list
         
     return render(request, "core/home.html", {"product_info_list": all_products})
