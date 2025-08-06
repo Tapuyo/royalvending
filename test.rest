@@ -14,7 +14,48 @@ Content-Type: application/json
 
 GET https://vendfetch.onrender.com/api/validatetoken
 Content-Type: application/json 
-Authorization: Token ae8b9ab6964ef39030a51f099cd96246bd793649
+Authorization: Token 8b105217fffdff379439b9cb03b0f4d4e5e6a396
+
+
+
+###
+
+POST https://vendfetch.onrender.com/api/addUserFav 
+Content-Type: application/json
+
+{ "item_code": "2", "userid": "3", "name": "testName", "current_price": "22", "image_url": "http://example.com/image.jpg", "product_link": "http://example.com/product", "supplier": "testSupplier", "supplier_url": "http://example.com/supplier", "category": "testCategory", "item_body": "testBody", "item_quantity": 1 }
+
+
+###
+
+GET https://vendfetch.onrender.com/api/getUserFav?&userid=3
+Content-Type: application/json 
+
+
+###
+
+DELETE  https://vendfetch.onrender.com/api/deleteUserFav
+Content-Type: application/json 
+
+{ "id": 9}
+
+
+###
+
+POST https://vendfetch.onrender.com/api/updateUserFav 
+Content-Type: application/json
+
+{ "id": 16, "item_quantity": 5 }
+
+
+
+
+
+
+
+
+
+
 
 ###
 //local

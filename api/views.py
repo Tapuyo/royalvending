@@ -106,7 +106,7 @@ def login(request):
 @authentication_classes([SessionAuthentication, TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def test_token(request):
-    return Response("passed for {}".format(request.user.id))
+    return Response({"user": {"username": request.user.username, "id": request.user.id}})
 
 
 @api_view(["POST"])
