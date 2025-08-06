@@ -144,7 +144,7 @@ def getUserFav(request):
     return Response(serializer.data)
 
 
-@api_view(["DELETE"])
+@api_view(["POST"])
 def deleteUserFav(request):
     fav_id = request.data.get("id")
     if not fav_id:

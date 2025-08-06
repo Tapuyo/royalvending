@@ -34,8 +34,9 @@ Content-Type: application/json
 
 ###
 
-DELETE  https://vendfetch.onrender.com/api/deleteUserFav
+DELETE  https://vendfetch.onrender.com/api/deleteUserFav?id=1
 Content-Type: application/json 
+Accpet: application/json
 
 { "id": 9}
 
@@ -97,10 +98,10 @@ Content-Type: application/json
 
 ###
 
-DELETE  http://127.0.0.1:8000/api/deleteUserFav
+POST  http://127.0.0.1:8000/api/deleteUserFav
 Content-Type: application/json 
 
-{ "id": 15}
+{ "id": 2}
 
 
 ###
