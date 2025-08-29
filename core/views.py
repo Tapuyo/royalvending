@@ -4037,7 +4037,7 @@ def generate_sku(name, link):
     return hashlib.md5(raw).hexdigest()[:10].upper()
 
 # ---- Main View ----
-def home(request):
+def thedistributorsmildura(request):
     products_data = []
 
     # Chrome Options
@@ -4141,6 +4141,840 @@ def home(request):
         driver.quit()
 
     return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+BASE_URL = "https://www.nutritionwarehouse.com.au"
+CATEGORY_URLS = [
+    "https://www.nutritionwarehouse.com.au/collections/bundles",
+    "https://www.nutritionwarehouse.com.au/collections/protein",
+    "https://www.nutritionwarehouse.com.au/collections/pre-workout",
+    "https://www.nutritionwarehouse.com.au/collections/creatine",
+    "https://www.nutritionwarehouse.com.au/collections/fat-burners",
+    "https://www.nutritionwarehouse.com.au/collections/amino-acids",
+    "https://www.nutritionwarehouse.com.au/collections/collagen",
+    "https://www.nutritionwarehouse.com.au/collections/rtd",
+    "https://www.nutritionwarehouse.com.au/collections/workout-apparel",
+]
+
+# ---- SKU Generator ----
+def generate_sku(name, link):
+    raw = f"{name}-{link}".encode("utf-8")
+    return hashlib.md5(raw).hexdigest()[:10].upper()
+
+# nutritionwarehouse
+def nutritionwarehouse(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--headless")  # uncomment to run headless
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            try:
+                category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+                print(f"\n=== Category: {category_name} ===")
+
+                for page in range(1, 50):  # adjust max pages
+                    page_url = f"{cat_url}?page={page}"
+                    print(f"Fetching: {page_url}")
+                    driver.get(page_url)
+
+                    try:
+                        WebDriverWait(driver, 5).until(
+                            EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".prdct-card"))
+                        )
+                        product_cards = driver.find_elements(By.CSS_SELECTOR, ".prdct-card")
+                    except TimeoutException:
+                        print(f"No products found in {category_name} page {page}. Moving to next category.")
+                        break
+
+                    if not product_cards:
+                        print(f"No more products in {category_name}, stopping at page {page}.")
+                        break
+
+                    for card in product_cards:
+                        try:
+                            # Title
+                            name = card.find_element(By.CSS_SELECTOR, ".prdct-card__title").text.strip()
+
+                            # Link
+                            try:
+                                link = card.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                            except:
+                                link = ""
+
+                            if link.startswith("/"):
+                                link = BASE_URL + link
+
+                            # Image
+                            try:
+                                image_url = card.find_element(By.CSS_SELECTOR, ".prdct-card__img img").get_attribute("src")
+                            except NoSuchElementException:
+                                image_url = ""
+
+                            # Price
+                            try:
+                                price = card.find_element(By.CSS_SELECTOR, ".prdct-card__price").text.strip()
+                            except NoSuchElementException:
+                                price = "N/A"
+
+                            # SKU
+                            sku = generate_sku(name, link)
+
+                            # Save to list
+                            products_data.append({
+                                "name": name,
+                                "code": sku,
+                                "currentPrice": price,
+                                "image_url": image_url,
+                                "product_link": link,
+                                "category": category_name
+                            })
+
+                            Product.objects.update_or_create(
+                            item_code=sku,
+                            defaults={
+                                'name': name,
+                                'current_price': price,
+                                'image_url': image_url,
+                                'product_link': link,
+                                'supplier': 'Nutrition Warehouse',
+                                'supplier_url': BASE_URL
+                            }
+                             )
+
+
+                        except Exception as e:
+                            print("Error parsing product:", e)
+                            continue
+
+            except Exception as e:
+                print(f"Error in category {cat_url}: {e}")
+                continue  # move to next category no matter what
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+BASE_URL = "https://www.supplementwholesalers.com.au/"
+CATEGORY_URLS = [
+    "https://www.supplementwholesalers.com.au/collections/accessories",
+    "https://www.supplementwholesalers.com.au/collections/amino-acids",
+    "https://www.supplementwholesalers.com.au/collections/snack-bar-cookies",
+    "https://www.supplementwholesalers.com.au/collections/creatine",
+    "https://www.supplementwholesalers.com.au/collections/endurance",
+    "https://www.supplementwholesalers.com.au/collections/immunity",
+    "https://www.supplementwholesalers.com.au/collections/mass-gainers",
+    "https://www.supplementwholesalers.com.au/pages/bodybuilding-supplements",
+    "https://www.supplementwholesalers.com.au/collections/gh-support",
+    "https://www.supplementwholesalers.com.au/collections/pre-workout",
+    "https://www.supplementwholesalers.com.au/collections/current-specials",
+    "https://www.supplementwholesalers.com.au/collections/top-10-all-products",
+    "https://www.supplementwholesalers.com.au/collections/test-support",
+    "https://www.supplementwholesalers.com.au/collections/turkesterone",
+    "https://www.supplementwholesalers.com.au/collections/vegan-protein",
+    "https://www.supplementwholesalers.com.au/collections/weight-loss",
+    "https://www.supplementwholesalers.com.au/collections/womens-protein"
+]
+
+
+def generate_sku(name, link):
+    raw = f"{name}-{link}".encode("utf-8")
+    return hashlib.md5(raw).hexdigest()[:10].upper()
+
+# ---- Scraper ----
+def supplementwholesalers(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--headless")  # uncomment for headless
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+            print(f"\n=== Category: {category_name} ===")
+
+            for page in range(1, 50):  # adjust max pages
+                page_url = f"{cat_url}?page={page}"
+                print(f"Fetching: {page_url}")
+                driver.get(page_url)
+                time.sleep(1)
+
+                product_cards = driver.find_elements(By.CSS_SELECTOR, ".product")
+                if not product_cards:
+                    print(f"No more products in {category_name}, stopping at page {page}.")
+                    break
+
+                for card in product_cards:
+                    try:
+                        # Title
+                        name = card.find_element(By.CSS_SELECTOR, ".title a").text.strip()
+
+                        # Link
+                        link = card.find_element(By.CSS_SELECTOR, ".title a").get_attribute("href")
+                        if link.startswith("/"):
+                            link = BASE_URL + link
+
+                        # Image
+                        try:
+                            img_el = card.find_element(By.CSS_SELECTOR, ".rimage__image")
+                            image_url = img_el.get_attribute("src")
+
+                            if not image_url:  # fallback if lazy loaded
+                                image_url = img_el.get_attribute("data-src")
+
+                            if not image_url:  # fallback to first from srcset
+                                srcset = img_el.get_attribute("srcset")
+                                if srcset:
+                                    image_url = srcset.split(",")[0].split(" ")[0]
+
+                            if image_url and image_url.startswith("//"):  # fix protocol-relative URLs
+                                image_url = "https:" + image_url
+
+                        except NoSuchElementException:
+                            image_url = ""
+
+                        # Price
+                        try:
+                            price = card.find_element(By.CSS_SELECTOR, ".price .amount").text.strip()
+                        except NoSuchElementException:
+                            price = "N/A"
+
+                        # Old Price (optional)
+                        try:
+                            old_price = card.find_element(By.CSS_SELECTOR, ".price .reducedfrom").text.strip()
+                        except NoSuchElementException:
+                            old_price = ""
+
+                        # SKU
+                        sku = generate_sku(name, link)
+
+                        # Save to list
+                        products_data.append({
+                            "name": name,
+                            "code": sku,
+                            "currentPrice": price,
+                            "oldPrice": old_price,
+                            "image_url": image_url,
+                            "product_link": link,
+                            "category": category_name
+                        })
+
+                        Product.objects.update_or_create(
+                            item_code=sku,
+                            defaults={
+                                'name': name,
+                                'current_price': price,
+                                'image_url': image_url,
+                                'product_link': link,
+                                'supplier': 'Supplement Wholesalers',
+                                'supplier_url': BASE_URL
+                            })
+
+                    except Exception as e:
+                        print("Error parsing product:", e)
+                        continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+BASE_URL = "https://www.mymusclechef.com"
+CATEGORY_URLS = [
+    "https://www.mymusclechef.com/menu/new",
+    "https://www.mymusclechef.com/menu/specials",
+    "https://www.mymusclechef.com/menu/meals",
+    "https://www.mymusclechef.com/menu/snacks-and-treats",
+    "https://www.mymusclechef.com/menu/drinks",
+    "https://www.mymusclechef.com/menu/bundles",
+]
+# mymusclechef
+def mymusclechef(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+            print(f"\n=== Category: {category_name} ===")
+
+            driver.get(cat_url)
+            time.sleep(3)
+
+            # find product cards
+            product_cards = driver.find_elements(By.CSS_SELECTOR, "div[id^='DR']")
+            if not product_cards:
+                print(f"No products found in {category_name}")
+                continue
+
+            for card in product_cards:
+                try:
+                    # Title
+                    try:
+                        name = card.find_element(By.CSS_SELECTOR, ".bg-off-white span").text.strip()
+                    except:
+                        name = "N/A"
+
+                    # Image
+                    try:
+                        img_el = card.find_element(By.CSS_SELECTOR, "img[alt='product image']")
+                        image_url = img_el.get_attribute("src")
+                        if image_url.startswith("/"):
+                            image_url = BASE_URL + image_url
+                    except:
+                        image_url = ""
+
+                    # Price
+                    try:
+                        price = card.find_element(By.CSS_SELECTOR, ".bg-off-white div.flex span").text.strip()
+                    except:
+                        price = "N/A"
+
+                    # SKU
+                    sku = generate_sku(name, image_url)
+
+                    # Save
+                    products_data.append({
+                        "name": name,
+                        "code": sku,
+                        "currentPrice": price,
+                        "oldPrice": "",
+                        "image_url": image_url,
+                        "product_link": cat_url,  # fallback, no direct link found
+                        "category": category_name
+                    })
+
+                    Product.objects.update_or_create(
+                        item_code=sku,
+                        defaults={
+                            'name': name,
+                            'current_price': price,
+                            'image_url': image_url,
+                            'product_link': cat_url,
+                            'supplier': 'My Muscle Chef',
+                            'supplier_url': BASE_URL
+                        })
+
+                    print(f"✔ {name} | {price}")
+
+                except Exception as e:
+                    print("Error parsing product:", e)
+                    continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+BASE_URL = "https://musashi.com/"
+CATEGORY_URLS = [
+    "https://musashi.com/collections/all-protein",
+    "https://musashi.com/collections/sports-supplements",
+    "https://musashi.com/collections/supplement-drinks",
+]
+# mymusclechef
+
+def generate_sku(name, link):
+    """Generate a simple SKU from product name + link (you can adjust as needed)."""
+    return (name + "-" + link.split("/")[-1]).replace(" ", "-").upper()[:50]
+
+def musashi(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless=new")  # headless mode
+
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+            print(f"\n=== Category: {category_name} ===")
+
+            driver.get(cat_url)
+            time.sleep(3)
+
+            # Find all product cards
+            product_cards = driver.find_elements(By.CSS_SELECTOR, "product-card")
+            if not product_cards:
+                print(f"No products found in {category_name}")
+                continue
+
+            for card in product_cards:
+                try:
+                    # --- Product Title ---
+                    name = "N/A"
+                    try:
+                        name = card.find_element(By.CSS_SELECTOR, ".card-title a").text.strip()
+                    except:
+                        try:
+                            name = card.get_attribute("aria-label") or "N/A"
+                        except:
+                            pass
+
+                    # --- Product Link ---
+                    try:
+                        link = card.find_element(By.CSS_SELECTOR, ".card-title a").get_attribute("href")
+                        if link.startswith("/"):
+                            link = BASE_URL.rstrip("/") + link
+                    except:
+                        link = cat_url
+
+                    # --- Image ---
+                    try:
+                        img_el = card.find_elements(By.CSS_SELECTOR, "img")[-1]  # last one is usually visible
+                        image_url = img_el.get_attribute("src")
+                        if image_url and image_url.startswith("//"):
+                            image_url = "https:" + image_url
+                    except:
+                        image_url = ""
+
+                    # --- Price ---
+                    price = "N/A"
+                    old_price = ""
+                    try:
+                        price = card.find_element(By.CSS_SELECTOR, ".text-primary-button span").text.strip()
+                    except:
+                        try:
+                            price = card.find_element(By.CSS_SELECTOR, ".price-fix-nz span").text.strip()
+                        except:
+                            pass
+
+                    try:
+                        old_price = card.find_element(By.CSS_SELECTOR, ".price-fix-nz span:last-child").text.strip()
+                    except:
+                        pass
+
+                    # --- Generate SKU ---
+                    sku = generate_sku(name, link)
+
+                    # --- Save in list ---
+                    products_data.append({
+                        "name": name,
+                        "code": sku,
+                        "currentPrice": price,
+                        "oldPrice": old_price,
+                        "image_url": image_url,
+                        "product_link": link,
+                        "category": category_name
+                    })
+
+                    # --- Save in DB ---
+                    Product.objects.update_or_create(
+                        item_code=sku,
+                        defaults={
+                            'name': name,
+                            'current_price': price,
+                            'image_url': image_url,
+                            'product_link': link,
+                            'supplier': 'Musashi',
+                            'supplier_url': BASE_URL
+                        }
+                    )
+
+                    print(f"✔ {name} | {price}")
+
+                except Exception as e:
+                    print("Error parsing product:", e)
+                    continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+
+BASE_URL = "https://famoussoda.co"
+CATEGORY_URLS = [
+    "https://famoussoda.co/collections/sugar-free-aussie-favourites",
+]
+
+
+def generate_sku(name, link):
+    """Generate SKU from product name + link"""
+    return (name + "-" + link.split("/")[-1]).replace(" ", "-").upper()[:50]
+
+
+def famoussoda(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+            print(f"\n=== Category: {category_name} ===")
+
+            driver.get(cat_url)
+            time.sleep(3)
+
+            # Each product block
+            product_cards = driver.find_elements(By.CSS_SELECTOR, ".prod-block-famous")
+            if not product_cards:
+                print(f"No products found in {category_name}")
+                continue
+
+            for card in product_cards:
+                try:
+                    # --- Product Link ---
+                    try:
+                        link = card.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+                        if link.startswith("/"):
+                            link = BASE_URL.rstrip("/") + link
+                    except:
+                        link = cat_url
+
+                    # --- Title ---
+                    try:
+                        title1 = card.find_element(By.CSS_SELECTOR, ".title-1").text.strip()
+                        title2 = card.find_element(By.CSS_SELECTOR, ".title-2").text.strip()
+                        name = f"{title1} - {title2}"
+                    except:
+                        name = "N/A"
+
+                    # --- Image ---
+                    try:
+                        img_el = card.find_element(By.CSS_SELECTOR, "img.fade-in")
+                        image_url = img_el.get_attribute("src")
+                        if image_url.startswith("//"):
+                            image_url = "https:" + image_url
+                    except:
+                        image_url = ""
+
+                    # --- Price ---
+                    try:
+                        price = card.find_element(By.CSS_SELECTOR, ".product-price__amount").text.strip()
+                    except:
+                        price = "N/A"
+
+                    # --- Reviews (if present) ---
+                    try:
+                        rating = card.find_element(By.CSS_SELECTOR, ".oke-sr-rating").text.strip()
+                        reviews = card.find_element(By.CSS_SELECTOR, ".oke-sr-count-number").text.strip()
+                    except:
+                        rating, reviews = "", ""
+
+                    # --- SKU ---
+                    sku = generate_sku(name, link)
+
+                    # --- Save to list ---
+                    products_data.append({
+                        "name": name,
+                        "code": sku,
+                        "currentPrice": price,
+                        "image_url": image_url,
+                        "product_link": link,
+                        "rating": rating,
+                        "reviews": reviews,
+                        "category": category_name
+                    })
+
+                    # --- Save in DB ---
+                    Product.objects.update_or_create(
+                        item_code=sku,
+                        defaults={
+                            'name': name,
+                            'current_price': price,
+                            'image_url': image_url,
+                            'product_link': link,
+                            'supplier': 'Famous Soda',
+                            'supplier_url': BASE_URL
+                        }
+                    )
+
+                    print(f"✔ {name} | {price} | {rating}⭐ ({reviews} reviews)")
+
+                except Exception as e:
+                    print("Error parsing product:", e)
+                    continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+
+BASE_URL = "https://futurebake.com.au/"
+CATEGORY_URLS = [
+    "https://futurebake.com.au/collections/start-me-up-range-collection",
+    "https://futurebake.com.au/collections/plant-based",
+    "https://futurebake.com.au/collections/gluten-free",
+    "https://futurebake.com.au/collections/cookies",
+    "https://futurebake.com.au/collections/brownie",
+    "https://futurebake.com.au/collections/muesli-slice",
+    "https://futurebake.com.au/collections/nut-bars",
+    "https://futurebake.com.au/collections/assorted-packs",
+]
+
+def generate_sku(name, link):
+    """Generate SKU from product name + link"""
+    return (name + "-" + link.split("/")[-1]).replace(" ", "-").upper()[:50]
+
+
+def futurebake(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for cat_url in CATEGORY_URLS:
+            category_name = urllib.parse.unquote(cat_url.split("/")[-1])
+            print(f"\n=== Category: {category_name} ===")
+
+            driver.get(cat_url)
+            time.sleep(3)
+
+            # Each product block (based on pasted HTML)
+            product_cards = driver.find_elements(By.CSS_SELECTOR, ".grid__item.grid-product")
+            if not product_cards:
+                print(f"No products found in {category_name}")
+                continue
+
+            for card in product_cards:
+                try:
+                    # --- Product Link ---
+                    try:
+                        link = card.find_element(By.CSS_SELECTOR, "a.grid-product__link").get_attribute("href")
+                        if link.startswith("/"):
+                            link = BASE_URL.rstrip("/") + link
+                    except:
+                        link = cat_url
+
+                    # --- Title ---
+                    try:
+                        name = card.find_element(By.CSS_SELECTOR, ".grid-product__title").text.strip()
+                    except:
+                        name = "N/A"
+
+                    # --- Image ---
+                    try:
+                        bg_div = card.find_element(By.CSS_SELECTOR, ".grid__image-ratio")
+                        style = bg_div.get_attribute("style")
+                        image_url = ""
+                        if "background-image" in style:
+                            image_url = style.split("url(")[-1].split(")")[0].replace('"', '').replace("'", "")
+                        if image_url.startswith("//"):
+                            image_url = "https:" + image_url
+                    except:
+                        image_url = ""
+
+                    # --- Prices ---
+                    price, old_price = "N/A", ""
+                    try:
+                        old_price = card.find_element(By.CSS_SELECTOR, ".grid-product__price--original").text.strip()
+                    except:
+                        pass
+
+                    try:
+                        price = card.find_element(By.CSS_SELECTOR, ".sale-price").text.strip()
+                    except:
+                        try:
+                            # fallback if not on sale
+                            price = card.find_element(By.CSS_SELECTOR, ".grid-product__price").text.strip()
+                        except:
+                            pass
+
+                    # --- SKU ---
+                    sku = generate_sku(name, link)
+
+                    # --- Save to list ---
+                    products_data.append({
+                        "name": name,
+                        "code": sku,
+                        "currentPrice": price,
+                        "oldPrice": old_price,
+                        "image_url": image_url,
+                        "product_link": link,
+                        "category": category_name
+                    })
+
+                    # --- Save in DB ---
+                    Product.objects.update_or_create(
+                        item_code=sku,
+                        defaults={
+                            'name': name,
+                            'current_price': price,
+                            'image_url': image_url,
+                            'product_link': link,
+                            'supplier': 'FutureBake',
+                            'supplier_url': BASE_URL
+                        }
+                    )
+
+                    print(f"✔ {name} | {price} (was {old_price})")
+
+                except Exception as e:
+                    print("Error parsing product:", e)
+                    continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+
+
+
+
+
+
+BASE_URL = "https://sweetcraft.com.au/shop/page/"
+MAX_PAGE = 70
+
+def generate_sku(name, link):
+    """Generate SKU from product name + link"""
+    return (name + "-" + link.split("/")[-1]).replace(" ", "-").upper()[:50]
+
+def home(request):
+    products_data = []
+
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        for page in range(1, MAX_PAGE + 1):
+            url = f"{BASE_URL}{page}/"
+            print(f"\n=== Page {page} ===")
+
+            driver.get(url)
+            time.sleep(2)
+
+            # Each product card
+            product_cards = driver.find_elements(By.CSS_SELECTOR, "li.product.type-product")
+            if not product_cards:
+                print(f"No products found on page {page}")
+                continue
+
+            for card in product_cards:
+                try:
+                    # --- Product Link ---
+                    try:
+                        link = card.find_element(By.CSS_SELECTOR, "a.woocommerce-LoopProduct-link").get_attribute("href")
+                    except:
+                        link = url
+
+                    # --- Title ---
+                    try:
+                        name = card.find_element(By.CSS_SELECTOR, "h2.woocommerce-loop-product__title").text.strip()
+                    except:
+                        name = "N/A"
+
+                    # --- Short description ---
+                    try:
+                        desc = card.find_element(By.CSS_SELECTOR, "a.woocommerce-LoopProduct-link p").text.strip()
+                    except:
+                        desc = ""
+
+                    # --- Image ---
+                    try:
+                        image_url = card.find_element(By.CSS_SELECTOR, "img.attachment-woocommerce_thumbnail").get_attribute("src")
+                    except:
+                        image_url = ""
+
+                    # --- Price ---
+                    price, old_price = "N/A", ""
+                    try:
+                        price = card.find_element(By.CSS_SELECTOR, "span.price").text.strip()
+                    except:
+                        pass
+
+                    # --- Category (from class names) ---
+                    try:
+                        class_list = card.get_attribute("class").split()
+                        categories = [c.replace("product_cat-", "") for c in class_list if c.startswith("product_cat-")]
+                        category_name = ",".join(categories) if categories else "Uncategorized"
+                    except:
+                        category_name = "Uncategorized"
+
+                    # --- SKU ---
+                    sku = generate_sku(name, link)
+
+                    # --- Save to list ---
+                    products_data.append({
+                        "name": name,
+                        "description": desc,
+                        "code": sku,
+                        "currentPrice": price,
+                        "oldPrice": old_price,
+                        "image_url": image_url,
+                        "product_link": link,
+                        "category": category_name
+                    })
+
+                    # --- Save in DB ---
+                    Product.objects.update_or_create(
+                        item_code=sku,
+                        defaults={
+                            'name': name,
+                            'current_price': price,
+                            'image_url': image_url,
+                            'product_link': link,
+                            'supplier': 'SweetCraft',
+                            'supplier_url': "https://sweetcraft.com.au",
+                            'description': desc
+                        }
+                    )
+
+                    print(f"✔ {name} | {price} | {category_name}")
+
+                except Exception as e:
+                    print("Error parsing product:", e)
+                    continue
+
+    finally:
+        driver.quit()
+
+    return render(request, 'core/home.html', {'product_info_list': products_data})
+
+
+
+
+
+
 
 
 

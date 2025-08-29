@@ -22,6 +22,10 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
+from collections import defaultdict, Counter
+import re
+
+
 
 
 @api_view(["GET"])
@@ -68,6 +72,88 @@ def getData(request):
     return Response(
         {"total": total, "page": page, "limit": limit, "results": serializer.data}
     )
+
+
+
+
+STOPWORDS = {"ml", "pack", "the", "and", "with", "of", "size"}
+
+@api_view(["GET"])
+def getDataGroup(request):
+    search = request.GET.get("search", "").strip()
+    supplier = request.GET.get("supplier", "").strip()
+    page = int(request.GET.get("page", 1))
+    limit = int(request.GET.get("limit", 10))
+
+    # Start with all products
+    products = Product.objects.all()
+
+    # Apply search filter (name or category)
+    if search:
+        exact_matches = Product.objects.filter(
+            Q(name__iexact=search) | Q(category__iexact=search)
+        )
+
+        partial_matches = Product.objects.filter(
+            Q(name__icontains=search) | Q(category__icontains=search)
+        ).exclude(id__in=exact_matches.values_list("id", flat=True))
+
+        products = list(exact_matches) + list(partial_matches)
+    else:
+        products = list(products)
+
+    # Apply supplier filter
+    if supplier:
+        products = [p for p in products if supplier.lower() in p.supplier.lower()]
+
+    # Pagination
+    total = len(products)
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_products = products[start:end]
+
+    # --- Grouping logic ---
+    token_counts = Counter()
+    product_tokens = {}
+
+    # Step 1: tokenize names
+    for product in products:
+        tokens = re.findall(r"[a-zA-Z0-9]+", product.name.lower())
+        tokens = [t for t in tokens if t not in STOPWORDS]
+        product_tokens[product.id] = tokens
+        token_counts.update(tokens)
+
+    # Step 2: find candidate grouping tokens (appear >1 time)
+    candidates = {t for t, c in token_counts.items() if c > 1}
+
+    # Step 3: assign products to best group
+    groups = defaultdict(list)
+    for product in paginated_products:  # group only paginated products
+        tokens = product_tokens[product.id]
+        matched = [t for t in tokens if t in candidates]
+        if matched:
+            key = matched[0].capitalize()
+        else:
+            key = "Others"
+        groups[key].append(product)
+
+    # Step 4: serialize grouped products
+    grouped_response = {
+        group: ProductSerializer(items, many=True).data
+        for group, items in groups.items()
+    }
+
+    return Response({
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "groups": grouped_response
+    })
+
+    # return Response(
+    #     {"total": total, "page": page, "limit": limit, "results": serializer.data}
+    # )
+
 
 
 @api_view(["GET"])
