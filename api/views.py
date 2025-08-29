@@ -78,6 +78,7 @@ def getData(request):
 
 STOPWORDS = {"ml", "pack", "the", "and", "with", "of", "size"}
 
+
 @api_view(["GET"])
 def getDataGroup(request):
     search = request.GET.get("search", "").strip()
@@ -137,11 +138,14 @@ def getDataGroup(request):
             key = "Others"
         groups[key].append(product)
 
-    # Step 4: serialize grouped products
-    grouped_response = {
-        group: ProductSerializer(items, many=True).data
+    # Step 4: convert to list of objects
+    grouped_response = [
+        {
+            "group": group,
+            "items": ProductSerializer(items, many=True).data
+        }
         for group, items in groups.items()
-    }
+    ]
 
     return Response({
         "total": total,
@@ -149,10 +153,6 @@ def getDataGroup(request):
         "limit": limit,
         "groups": grouped_response
     })
-
-    # return Response(
-    #     {"total": total, "page": page, "limit": limit, "results": serializer.data}
-    # )
 
 
 
