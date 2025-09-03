@@ -78,7 +78,6 @@ def getData(request):
 
 STOPWORDS = {"ml", "pack", "the", "and", "with", "of", "size"}
 
-
 @api_view(["GET"])
 def getDataGroup(request):
     search = request.GET.get("search", "").strip()
@@ -107,12 +106,6 @@ def getDataGroup(request):
     if supplier:
         products = [p for p in products if supplier.lower() in p.supplier.lower()]
 
-    # Pagination
-    total = len(products)
-    start = (page - 1) * limit
-    end = start + limit
-    paginated_products = products[start:end]
-
     # --- Grouping logic ---
     token_counts = Counter()
     product_tokens = {}
@@ -129,7 +122,7 @@ def getDataGroup(request):
 
     # Step 3: assign products to best group
     groups = defaultdict(list)
-    for product in paginated_products:  # group only paginated products
+    for product in products:  # group ALL products first
         tokens = product_tokens[product.id]
         matched = [t for t in tokens if t in candidates]
         if matched:
@@ -138,21 +131,31 @@ def getDataGroup(request):
             key = "Others"
         groups[key].append(product)
 
-    # Step 4: convert to list of objects
-    grouped_response = [
+    # Step 4: convert groups to list of dicts
+    grouped_list = [
         {
             "group": group,
-            "items": ProductSerializer(items, many=True).data
+            "items": ProductSerializer(
+                sorted(items, key=lambda x: x.current_price),
+                many=True
+            ).data
         }
         for group, items in groups.items()
     ]
 
+    # --- Pagination is now applied to groups, not products ---
+    total_groups = len(grouped_list)
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_groups = grouped_list[start:end]
+
     return Response({
-        "total": total,
+        "total_groups": total_groups,
         "page": page,
         "limit": limit,
-        "groups": grouped_response
+        "groups": paginated_groups
     })
+
 
 
 
