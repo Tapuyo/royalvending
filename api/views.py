@@ -135,10 +135,7 @@ def getDataGroup(request):
     grouped_list = [
         {
             "group": group,
-            "items": ProductSerializer(
-                sorted(items, key=lambda x: x.current_price),
-                many=True
-            ).data
+            "items": ProductSerializer(items, many=True).data
         }
         for group, items in groups.items()
     ]
