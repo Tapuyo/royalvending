@@ -4865,7 +4865,7 @@ def generate_sku(name, link):
     """Generate SKU from product name + link"""
     return (name + "-" + link.split("/")[-1]).replace(" ", "-").upper()[:50]
 
-def home(request):
+def sweetcraft(request):
     products_data = []
 
     options = Options()
@@ -4978,7 +4978,7 @@ def home(request):
 
 
 
-def home5(request):
+def home(request):
     all_products = []
     remedy_list = []
     fitness_list = []
