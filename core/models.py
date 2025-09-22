@@ -2,6 +2,11 @@ from django.db import models
 
 # Create your models here.
 class Product(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("deleted", "Deleted"),
+    ]
+
     name = models.CharField(max_length=255)
     image_url = models.URLField(blank=True)
     product_link = models.URLField()
@@ -12,7 +17,8 @@ class Product(models.Model):
     item_code = models.CharField(max_length=50, blank=True)  
     supplier = models.CharField(max_length=50, blank=True) 
     supplier_url = models.CharField(max_length=50, blank=True)   
-    item_body = models.CharField(max_length=500, blank=True)   
+    item_body = models.CharField(max_length=500, blank=True) 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")  
 
     def __str__(self):
         return f"{self.name} ({self.item_code})"

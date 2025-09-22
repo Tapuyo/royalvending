@@ -37,6 +37,10 @@ def getData(request):
 
     # Start with all products
     products = Product.objects.all()
+    
+    # Start with products that are not deleted
+    products = Product.objects.exclude(status="deleted")
+
 
     # Apply search filter (name or category)
     if search:
@@ -87,6 +91,10 @@ def getDataGroup(request):
 
     # Start with all products
     products = Product.objects.all()
+    
+    # Start with products that are not deleted
+    products = Product.objects.exclude(status="deleted")
+
 
     # Apply search filter (name or category)
     if search:
@@ -274,19 +282,24 @@ def updateProduct(request, pk):
     except Product.DoesNotExist:
         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = ProductSerializer(product, data=request.data, partial=True)  
+    # If status not included in request, keep old status
+    data = request.data.copy()
+    if "status" not in data:
+        data["status"] = product.status
+
+    serializer = ProductSerializer(product, data=data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-@api_view(["DELETE"])
+@api_view(["POST"])
 def deleteProduct(request, pk):
     try:
         product = Product.objects.get(pk=pk)
     except Product.DoesNotExist:
         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    product.delete()
-    return Response({"message": "Product deleted successfully"}, status=status.HTTP_200_OK)
+    product.status = "deleted"
+    product.save()
+    return Response({"message": "Product marked as deleted"}, status=status.HTTP_200_OK)
