@@ -11,4 +11,7 @@ urlpatterns = [
     path('getUserFav', views.getUserFav),
     path('deleteUserFav', views.deleteUserFav),
     path('updateUserFav', views.updateUserFav),
+    path("products/add/", views.addProduct, name="add_product"),
+    path("products/update/<int:pk>/", views.updateProduct, name="update_product"),
+    path("products/delete/<int:pk>/", views.deleteProduct, name="delete_product"),
 ]
