@@ -141,3 +141,6 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ]
 }
+
+import os
+PORT = os.environ.get("PORT", "8000") 
