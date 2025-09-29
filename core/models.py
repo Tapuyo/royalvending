@@ -17,7 +17,7 @@ class Product(models.Model):
     item_code = models.CharField(max_length=50, blank=True)  
     supplier = models.CharField(max_length=50, blank=True) 
     supplier_url = models.CharField(max_length=50, blank=True)   
-    item_body = models.CharField(max_length=500, blank=True) 
+    item_body = models.CharField(max_length=5000, blank=True) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")  
 
     def __str__(self):
